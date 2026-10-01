@@ -1,0 +1,6 @@
+{
+  "name": "IMAGE EDIT",
+  "description": "Fast. Private. Powerful Image Tools. Convert, resize, compress, crop, rotate, watermark, remove background, OCR text extraction, and AI image enhancement without storing images.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
