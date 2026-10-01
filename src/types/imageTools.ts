@@ -8,7 +8,8 @@ export type ToolId =
   | 'watermark'
   | 'ocr'
   | 'enhance'
-  | 'rename';
+  | 'rename'
+  | 'passport';
 
 export interface ImageItem {
   id: string;

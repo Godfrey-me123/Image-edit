@@ -182,108 +182,61 @@ Return your response in clean JSON format matching this structure:
   });
 });
 
-// API Route: AI Background Removal
-app.post('/api/ai/remove-bg', upload.single('image'), async (req, res) => {
-  let base64Image = '';
-  let mimeType = 'image/png';
-
-  if (req.file) {
-    base64Image = req.file.buffer.toString('base64');
-    mimeType = req.file.mimetype;
-  } else if (req.body.imageBase64) {
-    const parts = req.body.imageBase64.split(',');
-    base64Image = parts.length > 1 ? parts[1] : parts[0];
-    const match = req.body.imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,/);
-    if (match) mimeType = match[1];
-  } else {
+// API Route: Background Removal
+app.post('/api/remove-bg', upload.single('image'), async (req, res) => {
+  if (!req.file) {
     return res.status(400).json({ error: 'No image provided' });
   }
 
-  try {
-    if (process.env.GEMINI_API_KEY) {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                mimeType,
-                data: base64Image
-              }
-            },
-            {
-              text: `Analyze this image for background removal.
-Identify the primary subject(s) (person, object, animal, vehicle, product, or logo).
-Describe the background elements to be removed (e.g., solid wall, outdoor scene, studio backdrop, shadows).
-Provide precise bounding coordinates for the main subject in normalized percentage [top, left, bottom, right] where (0,0) is top-left and (100,100) is bottom-right.
-Identify dominant subject colors and background keying color range (e.g., white, green, complex gradient).
-
-Return JSON format:
-{
-  "subjectType": "person" | "product" | "vehicle" | "animal" | "object",
-  "subjectDescription": "description of main foreground object",
-  "backgroundDescription": "description of removed background",
-  "boundingBox": { "top": 10, "left": 15, "bottom": 90, "right": 85 },
-  "suggestedThreshold": 0.35,
-  "dominantSubjectColor": "#ffffff",
-  "backgroundKeyColor": "#e5e7eb",
-  "isComplexEdge": false
-}`
-            }
-          ]
-        },
-        config: {
-          responseMimeType: 'application/json'
-        }
-      });
-
-      const jsonText = response.text || '{}';
-      let analysis;
-      try {
-        analysis = JSON.parse(jsonText);
-      } catch {
-        analysis = {
-          subjectType: 'object',
-          subjectDescription: 'Primary foreground object',
-          backgroundDescription: 'Background elements',
-          boundingBox: { top: 5, left: 5, bottom: 95, right: 95 },
-          suggestedThreshold: 0.3,
-          dominantSubjectColor: '#000000',
-          backgroundKeyColor: '#ffffff',
-          isComplexEdge: false
-        };
-      }
-
-      mockUserDatabase.account.dailyUsageCount += 1;
-      return res.json({
-        success: true,
-        analysis,
-        originalMime: mimeType
-      });
-    }
-  } catch (err: any) {
-    console.warn('Gemini Remove-BG API busy or unavailable (503/429/Error). Using local Canvas edge segmentation fallback:', err.message);
-  }
-
-  // Resilient Offline Local Subject Segmentation Fallback
-  const fallbackAnalysis = {
-    subjectType: 'object',
-    subjectDescription: 'Primary foreground subject isolated locally',
-    backgroundDescription: 'Background removed with high-precision Canvas color keying',
-    boundingBox: { top: 5, left: 5, bottom: 95, right: 95 },
-    suggestedThreshold: 0.35,
-    dominantSubjectColor: '#000000',
-    backgroundKeyColor: '#ffffff',
-    isComplexEdge: false
+  // Helper for bgninja
+  const tryBgNinja = async (file: Express.Multer.File) => {
+    const body = new FormData();
+    body.append("file", new Blob([file.buffer]), file.originalname);
+    body.append("src", "image-edit-app");
+    const r = await fetch("https://bgninja.com/api/remove", { method: "POST", body });
+    if (!r.ok) throw new Error(`BgNinja failed: ${r.status}`);
+    return Buffer.from(await r.arrayBuffer());
   };
 
-  mockUserDatabase.account.dailyUsageCount += 1;
-  return res.json({
-    success: true,
-    analysis: fallbackAnalysis,
-    originalMime: mimeType,
-    isOfflineFallback: true
-  });
+  // Helper for fallback service
+  const tryFallbackService = async (file: Express.Multer.File, apiUrl: string) => {
+    const body = new FormData();
+    body.append("image", new Blob([file.buffer]), file.originalname);
+    body.append("return_type", "file");
+    body.append("output_format", "png");
+    
+    const r = await fetch(`${apiUrl}/api/remove-bg`, { method: "POST", body });
+    if (!r.ok) throw new Error(`Fallback service failed: ${r.status}`);
+    return Buffer.from(await r.arrayBuffer());
+  };
+
+  try {
+    // 1. Try BGNinja
+    try {
+      const buffer = await tryBgNinja(req.file);
+      res.set('Content-Type', 'image/png');
+      return res.send(buffer);
+    } catch (err) {
+      console.warn('BgNinja failed, trying fallback:', err);
+    }
+
+    // 2. Try Fallback Service
+    const fallbackUrl = process.env.FALLBACK_BG_REMOVAL_API_URL;
+    if (fallbackUrl) {
+      try {
+        const buffer = await tryFallbackService(req.file, fallbackUrl);
+        res.set('Content-Type', 'image/png');
+        return res.send(buffer);
+      } catch (err) {
+        console.error('Fallback API failed:', err);
+      }
+    }
+
+    throw new Error('Both background removal services failed');
+  } catch (err: any) {
+    console.error('All Remove BG attempts failed:', err);
+    res.status(500).json({ error: 'Failed to process background removal' });
+  }
 });
 
 // API Route: AI Image Enhancement & Super Resolution

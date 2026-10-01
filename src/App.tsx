@@ -13,6 +13,7 @@ import { WatermarkTool } from './components/tools/WatermarkTool';
 import { OcrTool } from './components/tools/OcrTool';
 import { EnhanceTool } from './components/tools/EnhanceTool';
 import { RenameTool } from './components/tools/RenameTool';
+import { PassportTool } from './components/tools/PassportTool';
 import { AccountModal } from './components/AccountModal';
 import { ShieldCheck, Lock } from 'lucide-react';
 
@@ -107,6 +108,7 @@ export default function App() {
           <RemoveBgTool
             initialFile={activeFile}
             onBack={() => handleSelectTool('home')}
+            onSelectTool={handleSelectTool}
           />
         )}
 
@@ -169,6 +171,13 @@ export default function App() {
         {activeTool === 'rename' && (
           <RenameTool
             initialFiles={activeBatchFiles || (activeFile ? [activeFile] : null)}
+            onBack={() => handleSelectTool('home')}
+          />
+        )}
+
+        {activeTool === 'passport' && (
+          <PassportTool
+            initialFile={activeFile}
             onBack={() => handleSelectTool('home')}
           />
         )}

@@ -10,6 +10,7 @@ import {
   FileText,
   Zap,
   FileEdit,
+  User,
   ArrowRight,
   ShieldCheck,
   Search,
@@ -138,6 +139,16 @@ export const ToolGrid: React.FC<ToolGridProps> = ({ onSelectTool, onQuickUpload 
       badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
       features: ['Images & PDF documents', 'Sequential numbering (Doc_001)', 'Prefix, Suffix & Find-Replace'],
     },
+    {
+      id: 'passport',
+      title: 'Passport Size',
+      category: 'editing',
+      description: 'Prepare images for passport requirements with standard size presets.',
+      icon: <User className="w-6 h-6 text-pink-400" />,
+      badge: 'Editing',
+      badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+      features: ['2x2 inch preset', '35x45mm preset', 'Easy cropping'],
+    },
   ];
 
   const filteredTools = tools.filter((t) => {
@@ -212,7 +223,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({ onSelectTool, onQuickUpload 
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            All 10 Tools
+            All 11 Tools
           </button>
           <button
             onClick={() => setFilter('ai')}
