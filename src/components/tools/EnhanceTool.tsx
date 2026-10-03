@@ -131,18 +131,18 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
             onClick={handleDownload}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950/30 transition-colors"
           >
-            <Download className="w-4 h-4" /> Download AI Enhanced ({options.scaleFactor}x)
+            <Download className="w-4 h-4" /> Download Enhanced ({options.scaleFactor}x)
           </button>
         )}
       </div>
 
       {!file ? (
-        <div className="bg-slate-900 border-2 border-dashed border-emerald-500/30 hover:border-emerald-400 rounded-3xl p-12 text-center max-w-2xl mx-auto space-y-4">
+        <div className="bg-slate-900 border-2 border-dashed border-emerald-500/30 hover:border-emerald-400 rounded-3xl p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-yellow-500/20 text-yellow-400 mx-auto flex items-center justify-center">
             <Zap className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">AI Image Enhancement</h2>
+            <h2 className="text-xl font-bold text-white">Image Enhancement & Upscale</h2>
             <p className="text-xs text-slate-400 mt-1">
               Super resolution upscaling (2x/4x), detail sharpening, and artifact reduction.
             </p>
@@ -164,7 +164,7 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
           {/* Controls Column */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-400" /> AI Enhancement Controls
+              <Zap className="w-4 h-4 text-yellow-400" /> Enhancement Controls
             </h3>
 
             {/* Scale Factor Selection */}
@@ -243,7 +243,7 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
             {analysisPlan && (
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-2xl text-[11px] text-slate-300 space-y-1">
                 <span className="font-bold text-yellow-400 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5" /> AI Quality Score
+                  <Sparkles className="w-3.5 h-3.5" /> Quality Score
                 </span>
                 <div className="flex justify-between font-mono text-xs">
                   <span>Before: {analysisPlan.qualityScoreBefore}/100</span>
@@ -258,7 +258,7 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
             {isProcessing ? (
               <div className="text-center space-y-3 p-8">
                 <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-sm font-semibold text-white">Applying AI Upscale & Detail Enhancement...</p>
+                <p className="text-sm font-semibold text-white">Enhancing Image Details...</p>
               </div>
             ) : enhancedUrl && previewUrl ? (
               <div
@@ -309,7 +309,7 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
                   Original ({formatBytes(file.size)})
                 </span>
                 <span className="absolute bottom-3 right-3 bg-yellow-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[11px] font-bold text-yellow-300 z-10 border border-yellow-700">
-                  AI Enhanced {options.scaleFactor}x ({formatBytes(enhancedSize || 0)})
+                  Enhanced {options.scaleFactor}x ({formatBytes(enhancedSize || 0)})
                 </span>
               </div>
             ) : null}

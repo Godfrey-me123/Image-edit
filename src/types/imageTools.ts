@@ -9,7 +9,12 @@ export type ToolId =
   | 'ocr'
   | 'enhance'
   | 'rename'
-  | 'passport';
+  | 'passport'
+  | 'photo-to-pdf'
+  | 'annotation'
+  | 'signature'
+  | 'sign-photo'
+  | 'my-photos';
 
 export interface ImageItem {
   id: string;

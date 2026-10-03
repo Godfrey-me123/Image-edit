@@ -204,7 +204,7 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
               <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3">
                 <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
                 <p className="text-xs text-slate-300 font-semibold">
-                  Reading Text Structures & Symbols with Gemini OCR...
+                  Extracting text structures & symbols...
                 </p>
               </div>
             ) : error ? (

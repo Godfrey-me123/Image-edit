@@ -1,5 +1,6 @@
 import { CropRect, WatermarkOptions, EnhanceOptions, ExportFormat } from '../types/imageTools';
 import { PDFDocument } from 'pdf-lib';
+import { generateBigstaFilename } from './filename';
 
 /**
  * Compress PDF Document client-side
@@ -507,9 +508,11 @@ export function downloadProcessedFile(
   fileName: string,
   autoDeleteAfterMs: number = 3000
 ) {
+  const extension = fileName.split('.').pop() || 'png';
+  const newFileName = generateBigstaFilename(fileName, extension);
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = fileName;
+  link.download = newFileName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

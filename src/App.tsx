@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ToolId, UserProfile } from './types/imageTools';
+import { PassportDocumentSpec } from './types/passport';
 import { Navbar } from './components/Navbar';
-import { PrivacyBanner } from './components/PrivacyBanner';
 import { ToolGrid } from './components/ToolGrid';
 import { RemoveBgTool } from './components/tools/RemoveBgTool';
 import { ResizeTool } from './components/tools/ResizeTool';
@@ -14,13 +14,21 @@ import { OcrTool } from './components/tools/OcrTool';
 import { EnhanceTool } from './components/tools/EnhanceTool';
 import { RenameTool } from './components/tools/RenameTool';
 import { PassportTool } from './components/tools/PassportTool';
+import { PhotoToPdfTool } from './components/tools/PhotoToPdfTool';
+import { AnnotationTool } from './components/tools/AnnotationTool';
+import { SignatureTool } from './components/tools/SignatureTool';
+import { SignPhotoTool } from './components/tools/SignPhotoTool';
+import { MyPhotosTool } from './components/tools/MyPhotosTool';
 import { AccountModal } from './components/AccountModal';
-import { ShieldCheck, Lock } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export default function App() {
   const [activeTool, setActiveTool] = useState<ToolId | 'home'>('home');
   const [activeFile, setActiveFile] = useState<File | null>(null);
   const [activeBatchFiles, setActiveBatchFiles] = useState<File[] | null>(null);
+  const [activeDataUrl, setActiveDataUrl] = useState<string | null>(null);
+  const [activePassportTemplate, setActivePassportTemplate] = useState<PassportDocumentSpec | null>(null);
+  const [activeDraftState, setActiveDraftState] = useState<any | null>(null);
 
   const [isAccountModalOpen, setIsAccountModalOpen] = useState<boolean>(false);
 
@@ -41,7 +49,6 @@ export default function App() {
   });
 
   useEffect(() => {
-    // Fetch initial user profile settings from backend
     fetch('/api/user/profile')
       .then((res) => res.json())
       .then((data) => {
@@ -58,10 +65,10 @@ export default function App() {
 
     if (fileArray.length > 1) {
       setActiveBatchFiles(fileArray);
-      setActiveTool('convert'); // Default batch action to converter
+      setActiveTool('convert');
     } else {
       setActiveFile(fileArray[0]);
-      setActiveTool('compress'); // Default single file action to compress
+      setActiveTool('compress');
     }
   };
 
@@ -70,7 +77,31 @@ export default function App() {
     if (tool === 'home') {
       setActiveFile(null);
       setActiveBatchFiles(null);
+      setActiveDataUrl(null);
+      setActivePassportTemplate(null);
+      setActiveDraftState(null);
     }
+  };
+
+  const handleLaunchPassportWithTemplate = (spec: PassportDocumentSpec) => {
+    setActivePassportTemplate(spec);
+    setActiveDraftState(null);
+    setActiveTool('passport');
+  };
+
+  const handleResumeDraft = (draftState: any) => {
+    setActiveDraftState(draftState);
+    setActiveTool('passport');
+  };
+
+  const handleOpenAnnotationWithImage = (dataUrl: string) => {
+    setActiveDataUrl(dataUrl);
+    setActiveTool('annotation');
+  };
+
+  const handleOpenSignPhotoWithImage = (dataUrl: string) => {
+    setActiveDataUrl(dataUrl);
+    setActiveTool('sign-photo');
   };
 
   const handleUpdateSettings = (newSettings: UserProfile['settings']) => {
@@ -83,7 +114,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-emerald-500 selection:text-slate-950">
+    <div className="min-h-screen bg-[#F0F4F8] text-[#1E293B] font-sans flex flex-col selection:bg-blue-500 selection:text-white">
       {/* Top Bar Navigation */}
       <Navbar
         activeTool={activeTool}
@@ -92,18 +123,66 @@ export default function App() {
         onOpenAccountModal={() => setIsAccountModalOpen(true)}
       />
 
-      {/* Global Strict Privacy Assurance Banner */}
-      <PrivacyBanner />
-
       {/* Main Content Body */}
       <main className="flex-1">
         {activeTool === 'home' && (
           <ToolGrid
-            onSelectTool={(toolId) => setActiveTool(toolId)}
+            onSelectTool={(toolId) => handleSelectTool(toolId)}
             onQuickUpload={handleQuickUpload}
+            onSelectPassportTemplate={handleLaunchPassportWithTemplate}
+            onOpenSettings={() => setIsAccountModalOpen(true)}
           />
         )}
 
+        {/* Master Passport Photo Maker Orchestrator */}
+        {activeTool === 'passport' && (
+          <PassportTool
+            initialFile={activeFile}
+            initialTemplate={activePassportTemplate}
+            initialDraftState={activeDraftState}
+            onBack={() => handleSelectTool('home')}
+            onOpenAnnotation={handleOpenAnnotationWithImage}
+            onOpenSignPhoto={handleOpenSignPhotoWithImage}
+          />
+        )}
+
+        {/* Annotation & Stamps Tool */}
+        {activeTool === 'annotation' && (
+          <AnnotationTool
+            initialFile={activeFile}
+            initialDataUrl={activeDataUrl || undefined}
+            onBack={() => handleSelectTool('home')}
+          />
+        )}
+
+        {/* Digital Signature Tool */}
+        {activeTool === 'signature' && (
+          <SignatureTool
+            onBack={() => handleSelectTool('home')}
+          />
+        )}
+
+        {/* Sign Photo Tool */}
+        {activeTool === 'sign-photo' && (
+          <SignPhotoTool
+            initialFile={activeFile}
+            initialDataUrl={activeDataUrl || undefined}
+            onBack={() => handleSelectTool('home')}
+            onOpenSignatureDrawer={() => handleSelectTool('signature')}
+          />
+        )}
+
+        {/* My Photos & Saved Library */}
+        {activeTool === 'my-photos' && (
+          <MyPhotosTool
+            onBack={() => handleSelectTool('home')}
+            onOpenInAnnotation={handleOpenAnnotationWithImage}
+            onOpenInSignPhoto={handleOpenSignPhotoWithImage}
+            onResumeDraft={handleResumeDraft}
+          />
+        )}
+
+        {/* Other Reused & Connected Utility Tools */}
         {activeTool === 'remove-bg' && (
           <RemoveBgTool
             initialFile={activeFile}
@@ -175,8 +254,8 @@ export default function App() {
           />
         )}
 
-        {activeTool === 'passport' && (
-          <PassportTool
+        {activeTool === 'photo-to-pdf' && (
+          <PhotoToPdfTool
             initialFile={activeFile}
             onBack={() => handleSelectTool('home')}
           />
@@ -192,36 +271,16 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/80 py-8 px-4 mt-12 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div className="space-y-1">
-            <span className="font-bold text-white text-sm block">IMAGE EDIT</span>
+      <footer className="border-t border-slate-200 bg-white py-6 px-4 mt-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+          <div className="space-y-0.5">
+            <span className="font-bold text-slate-900 text-sm block">IMAGE EDIT</span>
             <span className="text-[11px] text-slate-400 block">
-              Fast. Private. Powerful Image Tools.
+              Professional Passport Photo Maker & Image Studio
             </span>
           </div>
 
-          <div className="flex flex-wrap justify-center items-center gap-6 text-slate-400 text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <ShieldCheck className="w-4 h-4" /> 100% Zero File Storage Compliant
-            </span>
-            <span>·</span>
-            <button
-              onClick={() => setIsAccountModalOpen(true)}
-              className="hover:text-white transition-colors"
-            >
-              Privacy Policy & Audit
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setIsAccountModalOpen(true)}
-              className="hover:text-white transition-colors"
-            >
-              Subscription Plans
-            </button>
-          </div>
-
-          <div className="text-[11px] text-slate-500 font-mono">
+          <div className="text-[11px] text-slate-400 font-mono">
             © {new Date().getFullYear()} IMAGE EDIT. All rights reserved.
           </div>
         </div>

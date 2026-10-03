@@ -248,7 +248,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                       <Check className="w-3.5 h-3.5 text-emerald-400" /> 500 images / day
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Ultra 4K AI Upscale
+                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Ultra 4K HD Upscale
                     </li>
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-400" /> Batch 50 files
@@ -268,7 +268,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                       <Check className="w-3.5 h-3.5 text-emerald-400" /> Team Accounts
                     </li>
                     <li className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Dedicated API Key
+                      <Check className="w-3.5 h-3.5 text-emerald-400" /> Dedicated License Key
                     </li>
                   </ul>
                 </div>
@@ -290,7 +290,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                   <li>User images are NEVER saved to any database tables or disk storage.</li>
                   <li>Client-side canvas tools execute entirely inside your device's browser memory.</li>
                   <li>
-                    Server-assisted AI endpoints (Remove BG, OCR, Enhance) use RAM buffer streams
+                    All processing modules (Remove BG, OCR, Enhance) use temporary in-memory streams
                     and immediately destroy byte buffers upon response delivery.
                   </li>
                   <li>Downloaded files belong exclusively to your device storage.</li>
@@ -300,7 +300,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-[11px] text-slate-400 space-y-1">
                 <div className="text-emerald-400 font-bold">Privacy Audit Log (Live Session):</div>
                 <div>[SYSTEM] In-Memory Storage: ACTIVE (0 bytes saved to disk)</div>
-                <div>[DATABASE] User Table: Stores user_id, tier, preferences ONLY</div>
+                <div>[PREFERENCES] Active Profile: Current tier & settings only</div>
                 <div>[CLEANUP] Buffer Wipe Protocol: ENABLED on download complete</div>
               </div>
             </div>

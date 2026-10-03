@@ -5,7 +5,9 @@ import {
   Upload,
   ArrowLeft,
   Check,
-  RotateCcw
+  RotateCcw,
+  Undo,
+  Redo
 } from 'lucide-react';
 import {
   formatBytes,
@@ -14,6 +16,7 @@ import {
   canvasToBlobUrl,
   downloadProcessedFile
 } from '../../utils/imageProcessing';
+import { saveToMyPhotos } from '../../utils/myPhotosStorage';
 
 interface CropToolProps {
   initialFile?: File | null;
@@ -40,6 +43,32 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
   const [croppedSize, setCroppedSize] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // Undo / Redo history
+  const historyRef = useRef<typeof cropBox[]>([]);
+  const historyIndexRef = useRef<number>(-1);
+
+  const pushCropHistory = (box: typeof cropBox) => {
+    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+    historyRef.current.push({ ...box });
+    historyIndexRef.current = historyRef.current.length - 1;
+  };
+
+  const handleUndo = () => {
+    if (historyIndexRef.current <= 0) return;
+    historyIndexRef.current -= 1;
+    const box = historyRef.current[historyIndexRef.current];
+    setCropBox(box);
+    executeCrop(undefined, box);
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+    historyIndexRef.current += 1;
+    const box = historyRef.current[historyIndexRef.current];
+    setCropBox(box);
+    executeCrop(undefined, box);
+  };
+
   useEffect(() => {
     if (initialFile) {
       handleFileSelect(initialFile);
@@ -62,6 +91,7 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
 
     const initialBox = { x: initialX, y: initialY, width: initialW, height: initialH };
     setCropBox(initialBox);
+    pushCropHistory(initialBox);
 
     await executeCrop(img, initialBox);
   };
@@ -94,6 +124,7 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
       };
 
       setCropBox(newBox);
+      pushCropHistory(newBox);
       executeCrop(imageObj, newBox);
     }
   };
@@ -122,6 +153,16 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
     if (!croppedUrl || !file) return;
     const ext = file.name.split('.').pop() || 'png';
     const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-cropped.${ext}`;
+
+    saveToMyPhotos({
+      title: `Cropped - ${file.name}`,
+      type: 'raw',
+      dataUrl: croppedUrl,
+      widthPx: cropBox.width,
+      heightPx: cropBox.height,
+      fileSizeBytes: croppedSize || undefined,
+    });
+
     downloadProcessedFile(croppedUrl, cleanName);
   };
 
@@ -172,9 +213,27 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Controls Column */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <CropIcon className="w-4 h-4 text-amber-400" /> Aspect Ratio & Coordinates
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <CropIcon className="w-4 h-4 text-amber-400" /> Crop Controls
+              </h3>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleUndo}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs"
+                  title="Undo crop adjustment"
+                >
+                  <Undo className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleRedo}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs"
+                  title="Redo crop adjustment"
+                >
+                  <Redo className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
 
             {/* Ratios Buttons */}
             <div>

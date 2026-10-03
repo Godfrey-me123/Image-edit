@@ -11,313 +11,236 @@ import {
   Zap,
   FileEdit,
   User,
-  ArrowRight,
+  Settings,
+  Edit3,
+  PenTool,
+  Upload,
+  ChevronRight,
   ShieldCheck,
-  Search,
-  Upload
+  FolderOpen
 } from 'lucide-react';
 import { ToolId } from '../types/imageTools';
+import { PassportDocumentSpec, PASSPORT_SPECS } from '../types/passport';
+import { CustomSizeModal } from './modals/CustomSizeModal';
 
 interface ToolGridProps {
   onSelectTool: (toolId: ToolId) => void;
   onQuickUpload: (files: FileList) => void;
+  onSelectPassportTemplate?: (spec: PassportDocumentSpec) => void;
+  onOpenSettings?: () => void;
 }
 
 interface ToolCard {
   id: ToolId;
   title: string;
-  category: 'ai' | 'editing' | 'conversion';
-  description: string;
+  category: 'editing' | 'conversion';
   icon: React.ReactNode;
-  badge: string;
-  badgeColor: string;
   features: string[];
 }
 
-export const ToolGrid: React.FC<ToolGridProps> = ({ onSelectTool, onQuickUpload }) => {
-  const [filter, setFilter] = useState<'all' | 'ai' | 'editing' | 'conversion'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+export const ToolGrid: React.FC<ToolGridProps> = ({
+  onSelectTool,
+  onQuickUpload,
+  onSelectPassportTemplate,
+  onOpenSettings
+}) => {
+  const [showCustomModal, setShowCustomModal] = useState(false);
 
   const tools: ToolCard[] = [
-    {
-      id: 'remove-bg',
-      title: 'Remove Background',
-      category: 'ai',
-      description: 'Automatically detect subjects and generate transparent PNG backgrounds.',
-      icon: <Sparkles className="w-6 h-6 text-emerald-400" />,
-      badge: 'AI Powered',
-      badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-      features: ['Auto subject detection', 'Transparent PNG export', 'Live edge comparison'],
-    },
-    {
-      id: 'resize',
-      title: 'Resize Image',
-      category: 'editing',
-      description: 'Adjust width, height, aspect ratio presets, and resolution scale.',
-      icon: <Maximize2 className="w-6 h-6 text-blue-400" />,
-      badge: 'Instant Canvas',
-      badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      features: ['Dimension presets', 'Ratio lock option', 'Bicubic high quality'],
-    },
-    {
-      id: 'compress',
-      title: 'Compress Image',
-      category: 'editing',
-      description: 'Reduce file size up to 90% without sacrificing visual quality.',
-      icon: <FileArchive className="w-6 h-6 text-purple-400" />,
-      badge: 'Popular',
-      badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-      features: ['Quality slider', 'Estimated size preview', 'Side-by-side comparison'],
-    },
-    {
-      id: 'crop',
-      title: 'Crop Image',
-      category: 'editing',
-      description: 'Trim canvas using interactive handles, fixed aspect ratios, or custom px.',
-      icon: <Crop className="w-6 h-6 text-amber-400" />,
-      badge: 'Interactive',
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-      features: ['Rule of thirds grid', '16:9, 1:1, 4:3 ratios', 'Custom pixel coordinates'],
-    },
-    {
-      id: 'rotate',
-      title: 'Rotate & Flip',
-      category: 'editing',
-      description: 'Rotate 90°, 180°, 270°, horizontal flip, vertical flip, or free angle dial.',
-      icon: <RotateCw className="w-6 h-6 text-cyan-400" />,
-      badge: 'Instant Canvas',
-      badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-      features: ['Quick 90° turns', 'Horizontal & Vertical flip', 'Fine angle precision'],
-    },
-    {
-      id: 'convert',
-      title: 'Convert Image',
-      category: 'conversion',
-      description: 'Convert single or batch images to JPG, PNG, WEBP, or AVIF formats.',
-      icon: <FileType className="w-6 h-6 text-teal-400" />,
-      badge: 'Batch Ready',
-      badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-      features: ['JPG, PNG, WEBP, AVIF', 'Batch multi-file export', 'Zero quality loss mode'],
-    },
-    {
-      id: 'watermark',
-      title: 'Watermark Image',
-      category: 'editing',
-      description: 'Add custom text or brand logos with opacity and 9-point grid positioning.',
-      icon: <Stamp className="w-6 h-6 text-rose-400" />,
-      badge: 'Branding Tool',
-      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-      features: ['Text & Logo watermark', 'Tile pattern option', 'Opacity & scale control'],
-    },
-    {
-      id: 'ocr',
-      title: 'OCR Text Extraction',
-      category: 'ai',
-      description: 'Extract readable text, numbers, and tables directly from image documents.',
-      icon: <FileText className="w-6 h-6 text-indigo-400" />,
-      badge: 'AI Powered',
-      badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-      features: ['1-Click Copy Text', 'Download .txt file', 'Multi-language support'],
-    },
-    {
-      id: 'enhance',
-      title: 'AI Image Enhancement',
-      category: 'ai',
-      description: 'Upscale resolution (1.5x, 2x, 4x), sharpen detail, and reduce noise.',
-      icon: <Zap className="w-6 h-6 text-yellow-400" />,
-      badge: 'AI Upscale',
-      badgeColor: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-      features: ['2x / 4x Super Resolution', 'Detail sharpening', 'Before/After curtain view'],
-    },
-    {
-      id: 'rename',
-      title: 'Rename Image & PDF',
-      category: 'conversion',
-      description: 'Batch rename image and PDF filenames with custom patterns, sequential numbering, and find-replace.',
-      icon: <FileEdit className="w-6 h-6 text-orange-400" />,
-      badge: 'Batch Tool',
-      badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-      features: ['Images & PDF documents', 'Sequential numbering (Doc_001)', 'Prefix, Suffix & Find-Replace'],
-    },
-    {
-      id: 'passport',
-      title: 'Passport Size',
-      category: 'editing',
-      description: 'Prepare images for passport requirements with standard size presets.',
-      icon: <User className="w-6 h-6 text-pink-400" />,
-      badge: 'Editing',
-      badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-      features: ['2x2 inch preset', '35x45mm preset', 'Easy cropping'],
-    },
+    { id: 'passport', title: 'Passport Photo Maker', category: 'editing', icon: <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Automated Cutout & Official Compliance'] },
+    { id: 'remove-bg', title: 'Remove Background', category: 'editing', icon: <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Auto subject detection & transparent PNG'] },
+    { id: 'annotation', title: 'Annotation & Stamps', category: 'editing', icon: <Edit3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Notes, arrows, highlights, approval badges'] },
+    { id: 'signature', title: 'Digital Signature', category: 'editing', icon: <PenTool className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Draw & save transparent PNG signatures'] },
+    { id: 'sign-photo', title: 'Sign Photo', category: 'editing', icon: <Stamp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Place & scale signatures on documents'] },
+    { id: 'resize', title: 'Resize Image', category: 'editing', icon: <Maximize2 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Dimension presets & aspect ratio lock'] },
+    { id: 'compress', title: 'Compress Image', category: 'editing', icon: <FileArchive className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Quality slider up to 90% file reduction'] },
+    { id: 'crop', title: 'Crop Image', category: 'editing', icon: <Crop className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Rule of thirds grid & fixed ratios'] },
+    { id: 'rotate', title: 'Rotate & Flip', category: 'editing', icon: <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['90° turns, horizontal & vertical flip'] },
+    { id: 'convert', title: 'Convert Image', category: 'conversion', icon: <FileType className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Batch export JPG, PNG, WEBP, AVIF'] },
+    { id: 'watermark', title: 'Watermark', category: 'editing', icon: <Stamp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Custom text & logo positioning'] },
+    { id: 'ocr', title: 'OCR Text Extract', category: 'editing', icon: <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['1-click text extraction from documents'] },
+    { id: 'enhance', title: 'Enhance & Upscale', category: 'editing', icon: <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['2x/4x Super-resolution & sharpening'] },
+    { id: 'rename', title: 'Batch Rename', category: 'conversion', icon: <FileEdit className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['Sequential numbering & pattern rename'] },
+    { id: 'photo-to-pdf', title: 'Photo to PDF', category: 'conversion', icon: <FileType className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />, features: ['A4, A5, 5x7 sheet PDF document export'] },
   ];
 
-  const filteredTools = tools.filter((t) => {
-    const matchesCategory = filter === 'all' || t.category === filter;
-    const matchesSearch =
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.features.some((f) => f.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  const handleCustomConfirm = (spec: PassportDocumentSpec) => {
+    setShowCustomModal(false);
+    if (onSelectPassportTemplate) {
+      onSelectPassportTemplate(spec);
+    } else {
+      onSelectTool('passport');
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Hero Welcome Section */}
-      <div className="text-center space-y-4 max-w-3xl mx-auto pt-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-          <ShieldCheck className="w-4 h-4" />
-          <span>100% Private Temporary Processing Platform</span>
+    <div className="w-full max-w-lg md:max-w-2xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 space-y-5 sm:space-y-6">
+      {/* Top Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Passport Photo</h1>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenSettings}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-sm shadow-amber-500/20 active:scale-95 transition-transform"
+          >
+            ★ Pro
+          </button>
+          <button
+            onClick={onOpenSettings}
+            className="p-1.5 sm:p-2 bg-white rounded-full text-slate-600 border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+            title="Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
         </div>
+      </div>
 
-        <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-          Every Image Tool You Need, <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-            Without Saving a Single Byte.
-          </span>
-        </h1>
+      {/* 4 Quick Action Modules (Custom, Annotation, Signature, Sign Photo) */}
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-center text-xs">
+        <button
+          onClick={() => setShowCustomModal(true)}
+          className="bg-white p-2 sm:p-3 rounded-2xl shadow-sm text-slate-700 font-semibold border border-slate-200 hover:border-blue-500 hover:shadow-md active:scale-95 transition-all flex flex-col items-center group touch-manipulation"
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-xl mb-1 sm:mb-1.5 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+            <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[11px] sm:text-xs">Custom</span>
+        </button>
 
-        <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-          Compress, resize, crop, convert, watermark, remove background, extract OCR text, and AI upscale images with zero file retention.
-        </p>
+        <button
+          onClick={() => onSelectTool('annotation')}
+          className="bg-white p-2 sm:p-3 rounded-2xl shadow-sm text-slate-700 font-semibold border border-slate-200 hover:border-blue-500 hover:shadow-md active:scale-95 transition-all flex flex-col items-center group touch-manipulation"
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-xl mb-1 sm:mb-1.5 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+            <Edit3 className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[11px] sm:text-xs">Annotation</span>
+        </button>
 
-        {/* Global Instant Upload Box */}
-        <div className="pt-2">
-          <label className="relative group cursor-pointer block max-w-2xl mx-auto bg-slate-900/90 hover:bg-slate-850 border-2 border-dashed border-emerald-500/40 hover:border-emerald-400 rounded-2xl p-6 sm:p-8 transition-all shadow-xl shadow-emerald-950/20">
-            <input
-              type="file"
-              multiple
-              accept="image/*, application/pdf, .pdf"
-              className="sr-only"
-              onChange={(e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                  onQuickUpload(e.target.files);
+        <button
+          onClick={() => onSelectTool('signature')}
+          className="bg-white p-2 sm:p-3 rounded-2xl shadow-sm text-slate-700 font-semibold border border-slate-200 hover:border-blue-500 hover:shadow-md active:scale-95 transition-all flex flex-col items-center group touch-manipulation"
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-xl mb-1 sm:mb-1.5 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+            <PenTool className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[11px] sm:text-xs">Signature</span>
+        </button>
+
+        <button
+          onClick={() => onSelectTool('sign-photo')}
+          className="bg-white p-2 sm:p-3 rounded-2xl shadow-sm text-slate-700 font-semibold border border-slate-200 hover:border-blue-500 hover:shadow-md active:scale-95 transition-all flex flex-col items-center group touch-manipulation"
+        >
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-xl mb-1 sm:mb-1.5 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+            <Stamp className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[11px] sm:text-xs">Sign Photo</span>
+        </button>
+      </div>
+
+      {/* Primary Action Buttons (Create Photo & My Photos) */}
+      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+        <button
+          onClick={() => onSelectTool('passport')}
+          className="bg-blue-600 hover:bg-blue-500 text-white p-3.5 sm:p-4 rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-1.5 sm:gap-2 active:scale-[0.98] transition-all touch-manipulation"
+        >
+          <User className="w-4 h-4 sm:w-5 sm:h-5" /> Create Photo
+        </button>
+        <button
+          onClick={() => onSelectTool('my-photos')}
+          className="bg-white hover:bg-slate-50 text-blue-600 p-3.5 sm:p-4 rounded-2xl font-bold text-xs sm:text-sm border border-blue-200 shadow-sm flex items-center justify-center gap-1.5 sm:gap-2 active:scale-[0.98] transition-all touch-manipulation"
+        >
+          <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5" /> My Photos
+        </button>
+      </div>
+
+      {/* Universal Sizes Carousel */}
+      <div className="space-y-2.5 sm:space-y-3">
+        <div className="flex justify-between items-center text-slate-900 font-bold">
+          <h2 className="text-sm sm:text-base">Universal Sizes</h2>
+          <button
+            onClick={() => onSelectTool('passport')}
+            className="text-blue-600 text-xs font-semibold hover:underline"
+          >
+            See all
+          </button>
+        </div>
+        <div className="flex gap-2.5 sm:gap-3 overflow-x-auto pb-2 -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+          {PASSPORT_SPECS.slice(0, 4).map((spec) => (
+            <button
+              key={spec.id}
+              onClick={() => {
+                if (onSelectPassportTemplate) {
+                  onSelectPassportTemplate(spec);
+                } else {
+                  onSelectTool('passport');
                 }
               }}
-            />
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                <Upload className="w-6 h-6" />
+              className="min-w-[120px] sm:min-w-[130px] bg-white p-3 sm:p-3.5 rounded-2xl shadow-sm border border-slate-200 hover:border-blue-500 hover:shadow-md active:scale-95 transition-all text-left flex-shrink-0 group"
+            >
+              <div className="w-full aspect-[4/5] bg-slate-50 rounded-xl mb-2 sm:mb-2.5 flex items-center justify-center border border-slate-100 group-hover:scale-[1.02] transition-transform">
+                <span className="text-xl sm:text-2xl">{spec.flag || '🌐'}</span>
               </div>
-              <div className="space-y-1 text-center">
-                <span className="text-base font-semibold text-white block">
-                  Drop image or PDF files here or click to upload
-                </span>
-                <span className="text-xs text-slate-400 block">
-                  Supports JPG, PNG, WEBP, AVIF, PDF, HEIC, GIF • Max 50MB per file
-                </span>
+              <div className="font-bold text-xs text-slate-900 truncate">{spec.country}</div>
+              <div className="text-[10px] sm:text-[11px] text-slate-500 font-mono">
+                {spec.width}×{spec.height} {spec.unit}
               </div>
-            </div>
-          </label>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800">
-        {/* Interactive Segmented Filter Buttons */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 rounded-xl border border-slate-800 w-full sm:w-auto">
-          <button
-            onClick={() => setFilter('all')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-              filter === 'all'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            All 11 Tools
-          </button>
-          <button
-            onClick={() => setFilter('ai')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-              filter === 'ai'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            AI Powered
-          </button>
-          <button
-            onClick={() => setFilter('editing')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-              filter === 'editing'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Canvas Editing
-          </button>
-          <button
-            onClick={() => setFilter('conversion')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
-              filter === 'conversion'
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Convert & Batch
-          </button>
+      {/* Instant Drop Box */}
+      <label className="block p-4 bg-white border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-2xl cursor-pointer text-center space-y-1 transition-all">
+        <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-800">
+          <Upload className="w-4 h-4 text-blue-600" />
+          <span>Quick Drop File to Process</span>
         </div>
+        <span className="text-[10px] text-slate-400 block">
+          Drop any photo or PDF to open compressor / converter
+        </span>
+        <input
+          type="file"
+          multiple
+          className="sr-only"
+          onChange={(e) => e.target.files && onQuickUpload(e.target.files)}
+        />
+      </label>
 
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-64">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search tools..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
-          />
+      {/* All Tools List */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-slate-900">All Utility Tools</h2>
+          <span className="text-xs text-slate-400 font-medium">{tools.length} modules</span>
         </div>
-      </div>
-
-      {/* Grid of Tools */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredTools.map((tool) => (
-          <div
-            key={tool.id}
-            onClick={() => onSelectTool(tool.id)}
-            className="group relative bg-slate-900/80 hover:bg-slate-850 border border-slate-800 hover:border-slate-700/80 rounded-2xl p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between hover:shadow-xl hover:shadow-emerald-950/20"
-          >
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  {tool.icon}
-                </div>
-                <span
-                  className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${tool.badgeColor}`}
-                >
-                  {tool.badge}
-                </span>
+        <div className="space-y-2">
+          {tools.map((tool) => (
+            <button
+              key={tool.id}
+              onClick={() => onSelectTool(tool.id)}
+              className="w-full flex items-center gap-3.5 bg-white p-3.5 rounded-2xl shadow-sm hover:border-blue-500 border border-slate-200 hover:shadow-md transition-all text-left group"
+            >
+              <div className="p-2.5 bg-slate-50 rounded-xl text-blue-600 group-hover:bg-blue-50 transition-colors">
+                {tool.icon}
               </div>
-
-              <div>
-                <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
+              <div className="flex-grow min-w-0">
+                <div className="font-bold text-xs text-slate-900 group-hover:text-blue-600 transition-colors">
                   {tool.title}
-                </h3>
-                <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                  {tool.description}
-                </p>
+                </div>
+                <div className="text-[11px] text-slate-400 truncate">{tool.features[0]}</div>
               </div>
-
-              {/* Feature bullet list */}
-              <ul className="space-y-1.5 pt-2 border-t border-slate-800/80">
-                {tool.features.map((feat, idx) => (
-                  <li key={idx} className="text-[11px] text-slate-400 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/60 shrink-0" />
-                    <span>{feat}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="pt-5 mt-4 border-t border-slate-800/60 flex items-center justify-between text-xs font-semibold text-slate-300 group-hover:text-emerald-400 transition-colors">
-              <span>Open Tool</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-        ))}
+              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Custom Size Modal */}
+      <CustomSizeModal
+        isOpen={showCustomModal}
+        onClose={() => setShowCustomModal(false)}
+        onConfirm={handleCustomConfirm}
+      />
     </div>
   );
 };

@@ -81,7 +81,7 @@ app.post('/api/user/settings', (req, res) => {
 });
 
 // API Route: AI OCR Text Extraction
-app.post('/api/ai/ocr', upload.single('image'), async (req, res) => {
+app.post('/api/ai/ocr', (upload.single('image') as any), async (req: any, res: any) => {
   let base64Image = '';
   let mimeType = 'image/png';
 
@@ -183,7 +183,7 @@ Return your response in clean JSON format matching this structure:
 });
 
 // API Route: Background Removal
-app.post('/api/remove-bg', upload.single('image'), async (req, res) => {
+app.post('/api/remove-bg', (upload.single('image') as any), async (req: any, res: any) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No image provided' });
   }
@@ -191,7 +191,7 @@ app.post('/api/remove-bg', upload.single('image'), async (req, res) => {
   // Helper for bgninja
   const tryBgNinja = async (file: Express.Multer.File) => {
     const body = new FormData();
-    body.append("file", new Blob([file.buffer]), file.originalname);
+    body.append("file", new Blob([new Uint8Array(file.buffer)]), file.originalname);
     body.append("src", "image-edit-app");
     const r = await fetch("https://bgninja.com/api/remove", { method: "POST", body });
     if (!r.ok) throw new Error(`BgNinja failed: ${r.status}`);
@@ -201,7 +201,7 @@ app.post('/api/remove-bg', upload.single('image'), async (req, res) => {
   // Helper for fallback service
   const tryFallbackService = async (file: Express.Multer.File, apiUrl: string) => {
     const body = new FormData();
-    body.append("image", new Blob([file.buffer]), file.originalname);
+    body.append("image", new Blob([new Uint8Array(file.buffer)]), file.originalname);
     body.append("return_type", "file");
     body.append("output_format", "png");
     
@@ -240,7 +240,7 @@ app.post('/api/remove-bg', upload.single('image'), async (req, res) => {
 });
 
 // API Route: AI Image Enhancement & Super Resolution
-app.post('/api/ai/enhance', upload.single('image'), async (req, res) => {
+app.post('/api/ai/enhance', (upload.single('image') as any), async (req: any, res: any) => {
   let base64Image = '';
   let mimeType = 'image/png';
 

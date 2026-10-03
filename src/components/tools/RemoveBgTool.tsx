@@ -111,7 +111,7 @@ export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack,
           {error && <div className="p-4 bg-rose-950/40 border border-rose-800 rounded-2xl text-xs text-rose-300">{error}</div>}
           <div className="relative bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden min-h-[420px] flex items-center justify-center p-4">
             {isProcessing ? (
-              <div className="text-center p-8 text-sm font-semibold text-white">Detecting Subject...</div>
+              <div className="text-center p-8 text-sm font-semibold text-white">Removing background...</div>
             ) : processedUrl && previewUrl ? (
               <div ref={containerRef} className="relative w-full max-w-4xl h-[480px] overflow-hidden rounded-2xl select-none shadow-2xl">
                 <img src={processedUrl} alt="Result" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
